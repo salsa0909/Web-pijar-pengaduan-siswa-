@@ -1,0 +1,46 @@
+export type StudentType = 'anonim' | 'real_name';
+export type Gender = 'Laki-laki' | 'Perempuan';
+export type ReportStatus = 'Menunggu' | 'Ditindaklanjuti' | 'Selesai';
+export type ReportPriority = 'Normal' | 'Penting' | 'Mendesak';
+
+export interface Report {
+  id: string;
+  ticketCode: string;
+  studentType: StudentType;
+  studentName?: string;
+  studentClass: string;
+  gender: Gender;
+  category: string;
+  description: string;
+  photoUrl?: string;
+  photoName?: string;
+  status: ReportStatus;
+  adminReply?: string;
+  repliedBy?: string;
+  repliedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  priority: ReportPriority;
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  fullName: string;
+  role: string;
+  passwordHash: string;
+  securityQuestion: string;
+  securityAnswerHash: string;
+  resetCode: string;
+}
+
+export interface AppNotification {
+  id: string;
+  reportId: string;
+  ticketCode: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  adminName: string;
+}
