@@ -1,0 +1,42 @@
+pijar-smkn3-medan/
+├── .gitignore
+├── .env.example
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── index.html
+├── server.ts
+├── data/
+│   └── reports_database.json
+├── public/
+│   └── background_graha_smektri.jpg
+└── src/
+    ├── main.tsx
+    ├── App.tsx
+    ├── index.css
+    ├── types/
+    │   └── index.ts
+    ├── services/
+    │   └── storage.ts
+    ├── assets/
+    │   └── images/
+    │       ├── smkn3_atom_logo.svg
+    │       ├── osis_vanguard_crest.svg
+    │       └── background_graha_smektri.jpg
+    └── components/
+        ├── Header.tsx
+        ├── HeroWelcome.tsx
+        ├── GuideSteps.tsx
+        ├── ComplaintForm.tsx
+        ├── TrustedContacts.tsx
+        ├── Footer.tsx
+        ├── AdminLogin.tsx
+        ├── AdminDashboard.tsx
+        ├── AdminReplyModal.tsx
+        ├── AdminResetPasswordModal.tsx
+        ├── AdminBackgroundModal.tsx
+        ├── AdminStatsChart.tsx
+        ├── PhoneHotlineModal.tsx
+        ├── TicketStatusModal.tsx
+        ├── SubmissionSuccessModal.tsx
+        └── HeadsUpBanner.tsx
