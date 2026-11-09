@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #1e1b18;
+    background-color: #faf8f8;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  html.dark body {
+    color: #f8fafc;
+    background-color: #1a202c; /* Cahaya gelap lembut & tetap terang/bersih */
+  }
+}
+
+@keyframes subtleZoomPan {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.06) translate(-1%, -1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+.animate-subtle-zoom {
+  animation: subtleZoomPan 28s ease-in-out infinite alternate;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fdf2f2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e05252;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
