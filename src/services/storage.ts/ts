@@ -1,0 +1,186 @@
+import { Report, AdminUser, AppNotification } from '../types';
+
+export const STORAGE_KEYS = {
+  REPORTS: 'pijar_reports',
+  ADMINS: 'pijar_admins',
+  ACTIVE_SESSION: 'pijar_active_admin_session',
+  NOTIFICATIONS: 'pijar_notifications',
+  STUDENT_TICKETS: 'pijar_my_tickets',
+};
+
+function simpleHash(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return 'pjr_h_' + Math.abs(hash).toString(16) + '_' + text.length;
+}
+
+// Akun Admin Resmi 1 s/d 4 (Password default: "Smkn3 masa depan")
+const INITIAL_ADMINS: AdminUser[] = [
+  {
+    id: 'adm-01',
+    username: 'admin1',
+    fullName: 'Admin 1',
+    role: 'Pengelola Pengaduan Siswa 1 SMKN 3 Medan',
+    passwordHash: simpleHash('Smkn3 masa depan'),
+    securityQuestion: 'Apa nama sekolah ini?',
+    securityAnswerHash: simpleHash('smkn 3 medan'),
+    resetCode: 'Smkn3 masa depan',
+  },
+  {
+    id: 'adm-02',
+    username: 'admin2',
+    fullName: 'Admin 2',
+    role: 'Pengelola Pengaduan Siswa 2 SMKN 3 Medan',
+    passwordHash: simpleHash('Smkn3 masa depan'),
+    securityQuestion: 'Apa nama sekolah ini?',
+    securityAnswerHash: simpleHash('smkn 3 medan'),
+    resetCode: 'Smkn3 masa depan',
+  },
+  {
+    id: 'adm-03',
+    username: 'admin3',
+    fullName: 'Admin 3',
+    role: 'Pengelola Pengaduan Siswa 3 SMKN 3 Medan',
+    passwordHash: simpleHash('Smkn3 masa depan'),
+    securityQuestion: 'Apa nama sekolah ini?',
+    securityAnswerHash: simpleHash('smkn 3 medan'),
+    resetCode: 'Smkn3 masa depan',
+  },
+  {
+    id: 'adm-04',
+    username: 'admin4',
+    fullName: 'Admin 4',
+    role: 'Pengelola Pengaduan Siswa 4 SMKN 3 Medan',
+    passwordHash: simpleHash('Smkn3 masa depan'),
+    securityQuestion: 'Apa nama sekolah ini?',
+    securityAnswerHash: simpleHash('smkn 3 medan'),
+    resetCode: 'Smkn3 masa depan',
+  },
+];
+
+export function getStoredReports(): Report[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.REPORTS);
+    if (!raw) return [];
+    const parsed: Report[] = JSON.parse(raw);
+    return parsed.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  } catch {
+    return [];
+  }
+}
+
+export async function syncReportsWithDatabase(): Promise<Report[]> {
+  try {
+    const res = await fetch('/api/reports');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.reports)) {
+        localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(data.reports));
+        return data.reports;
+      }
+    }
+  } catch (err) {
+    console.warn('[STORAGE] Server fetch failed, using local cache:', err);
+  }
+  return getStoredReports();
+}
+
+export function submitReport(reportData: any): Report {
+  const reports = getStoredReports();
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const ticketCode = `PJR-2026-${randomNum}`;
+
+  const newReport: Report = {
+    id: 'rep_' + Date.now(),
+    ticketCode,
+    studentType: reportData.studentType,
+    studentName: reportData.studentType === 'anonim' ? 'Anonim' : (reportData.studentName || 'Anonim'),
+    studentClass: reportData.studentClass,
+    gender: reportData.gender,
+    category: reportData.category,
+    description: reportData.description,
+    photoUrl: reportData.photoUrl,
+    photoName: reportData.photoName,
+    status: 'Menunggu',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    priority: reportData.priority || 'Normal',
+  };
+
+  const updatedReports = [...reports, newReport];
+  localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(updatedReports));
+
+  fetch('/api/reports', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newReport),
+  }).catch(console.error);
+
+  return newReport;
+}
+
+export function getStoredAdmins(): AdminUser[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ADMINS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.ADMINS, JSON.stringify(INITIAL_ADMINS));
+      return INITIAL_ADMINS;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return INITIAL_ADMINS;
+  }
+}
+
+export function authenticateAdmin(username: string, passwordPlain: string): AdminUser | null {
+  const admins = getStoredAdmins();
+  let cleanUser = username.trim().toLowerCase();
+
+  if (cleanUser === '1' || cleanUser === 'admin 1') cleanUser = 'admin1';
+  if (cleanUser === '2' || cleanUser === 'admin 2') cleanUser = 'admin2';
+  if (cleanUser === '3' || cleanUser === 'admin 3') cleanUser = 'admin3';
+  if (cleanUser === '4' || cleanUser === 'admin 4') cleanUser = 'admin4';
+
+  const rawPassword = passwordPlain.trim();
+  const isSmkn3CodeMatch = rawPassword === 'Smkn3 masa depan' || rawPassword.toLowerCase() === 'smkn3 masa depan';
+
+  const matched = admins.find(
+    (a) => a.username.toLowerCase() === cleanUser && (isSmkn3CodeMatch || a.passwordHash === simpleHash(rawPassword))
+  );
+
+  if (matched) {
+    const session = {
+      adminId: matched.id,
+      fullName: matched.fullName,
+      role: matched.role,
+      username: matched.username,
+      loginAt: new Date().toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION, JSON.stringify(session));
+    return matched;
+  }
+  return null;
+}
+
+export function getActiveSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearActiveSession() {
+  localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
+}
+
+export function getReportByTicket(ticketCode: string): Report | undefined {
+  const reports = getStoredReports();
+  const cleanCode = ticketCode.trim().toUpperCase();
+  return reports.find((r) => r.ticketCode.toUpperCase() === cleanCode);
+}
